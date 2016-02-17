@@ -1,0 +1,28 @@
+name:           Media
+version:        0.1.0
+synopsis:       Library for media managment (using event sourcing, CQRS)
+author:         Tim McIver
+build-type:     Simple
+cabal-version:  >= 1.10
+         
+Library
+     Build-Depends:     base >= 3 && < 5,
+                        cryptohash,
+                        bytestring
+     Exposed-modules:   Domain.Media
+     hs-source-dirs:    src
+     ghc-options:       -Wall
+   default-language:    Haskell2010
+
+test-suite tests
+   ghc-options: -Wall
+   default-extensions:  OverloadedStrings
+   type: exitcode-stdio-1.0
+   hs-source-dirs: test, src
+   main-is: HSpecTests.hs
+   build-depends:       base,
+                        cryptohash,
+                        bytestring,
+                        containers,
+                        hspec                >= 1.8
+   default-language:    Haskell2010
