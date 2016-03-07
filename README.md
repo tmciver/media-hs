@@ -1,8 +1,14 @@
 # Media: a photo/video/audio file manager library written in Haskell
 
+## Building
+
+This project uses [stack](haskellstack.org) (a.k.a. The Haskell Tool Stack). To
+build the library enter the following command in the project root:
+
+    $ stack build
+
 ## Tests
 
-This library uses HSpec for testing.  To run tests, type the following in the
-project root directory:
+To run tests, type the following in the project root:
 
-    $ cabal test
+    $ stack test
