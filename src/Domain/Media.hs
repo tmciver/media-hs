@@ -18,11 +18,7 @@ data Aggregate a = Aggregate { aggregateId :: AggregateId
                              , aggregateData :: a
                              }
 
--- Question: how do we identify a media file? I heard somewhere that large files
--- like photos and videos should not be stored in the events themselves but
--- should be put into a document repository. In that case I suppose we'd have
--- some kind of ID or URL to the file that we could store in the events.
--- For now, we'll just use a file system path.
+-- For now, media will be identified by it's file system path.
 type MediaIdentifier = FilePath
 
 -- Media can be one of the following types
