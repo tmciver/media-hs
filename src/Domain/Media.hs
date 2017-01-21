@@ -33,7 +33,7 @@ data Media = Media { id :: MediaIdentifier
                    }
 
 data Command = AddMedia MediaIdentifier
-             | DeleteMedia
+             | DeleteMedia MediaIdentifier
 
 data Event = MediaWasAdded AggregateId MediaIdentifier MediaClass
            | MediaWasDeleted AggregateId
@@ -48,4 +48,4 @@ mediaHandler (AddMedia mediaId) = pure [MediaWasAdded id mediaId mediaClass]
   where id = hashToHexString mediaId -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
         hashToHexString = Data.List.concatMap (printf "%02x") . BS.unpack . SHA1.hash . BS.pack
         mediaClass = getMediaClassForFile mediaId
-mediaHandler DeleteMedia = undefined
+mediaHandler (DeleteMedia mediaId) = pure [MediaWasDeleted mediaId]
