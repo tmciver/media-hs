@@ -10,12 +10,12 @@ type EntityId = String
 --                                  , apply :: event -> Entity entity event
 --                                  }
 
-data Entity e = Entity { _entityId :: e -> EntityId
---                       , _apply :: forall event error . event -> e -> Either error e
-                       }
+data Entity entity event = Entity { _entityId :: entity -> EntityId
+                                  , _apply :: entity -> event -> Either String entity
+                                  }
 
-getEntityId :: Entity e -> e -> EntityId
+getEntityId :: Entity entity event -> entity -> EntityId
 getEntityId entityI entity = _entityId entityI entity
 
--- applyEvent :: Entity e -> event -> e -> Either error e
--- applyEvent entityI event entity = apply entityI event entity
+applyEvent :: Entity entity event -> entity -> event -> Either String entity
+applyEvent entityI entity event = _apply entityI entity event
