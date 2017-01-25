@@ -26,6 +26,7 @@ data Media = EmptyMedia
                    , mediaClass :: MediaClass
                    , isDeleted :: Bool
                    }
+           deriving (Eq, Show)
 
 data MediaCommand = AddMedia MediaIdentifier
                   | DeleteMedia MediaIdentifier
