@@ -21,7 +21,7 @@ type MediaIdentifier = FilePath
 data MediaClass = Photo | Video | Audio
                 deriving (Eq, Show)
 data Media = EmptyMedia
-           | Media { entityId :: EntityId
+           | Media { mediaEntityId :: EntityId
                    , mediaId :: MediaIdentifier
                    , mediaClass :: MediaClass
                    , isDeleted :: Bool
@@ -37,21 +37,21 @@ data MediaEvent = MediaWasAdded EntityId MediaIdentifier MediaClass
 
 mediaEntity :: Media -> Entity Media MediaEvent
 mediaEntity media = Entity {
-  _entityId = entityId,
+  _entityId = mediaEntityId,
   _apply = applyMediaEvent
   }
 
 applyMediaEvent :: Media -> MediaEvent -> Either String Media
 applyMediaEvent media event = case event of
   MediaWasAdded id' mediaId' mediaClass' -> case media of
-    EmptyMedia -> Right $ Media { entityId = id'
+    EmptyMedia -> Right $ Media { mediaEntityId = id'
                                 , mediaId = mediaId'
                                 , mediaClass = mediaClass'
                                 , isDeleted = False }
     Media _ _ _ _ -> Left "MediaWasAdded event can only be applied to EmptyMedia."
   MediaWasDeleted id' -> case media of
     EmptyMedia -> Left "MediaWasDeleted event cannot be applied to EmptyMedia."
-    Media id' mediaId' mediaClass' _ -> Right $ Media { entityId = id'
+    Media id' mediaId' mediaClass' _ -> Right $ Media { mediaEntityId = id'
                                                     , mediaId = mediaId'
                                                     , mediaClass = mediaClass'
                                                     , isDeleted = True }
