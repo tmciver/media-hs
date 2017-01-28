@@ -38,6 +38,7 @@ data MediaEvent = MediaWasAdded EntityId MediaIdentifier MediaClass
 mediaEntity :: Media -> Entity Media MediaEvent
 mediaEntity media = Entity {
   _entityId = mediaEntityId,
+  _init = EmptyMedia,
   _apply = applyMediaEvent
   }
 
