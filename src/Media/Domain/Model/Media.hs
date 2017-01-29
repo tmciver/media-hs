@@ -1,4 +1,4 @@
-module Domain.Model.Media
+module Media.Domain.Model.Media
        ( --AggregateId
          --, Aggregate
          MediaCommand(..)
