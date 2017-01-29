@@ -40,8 +40,7 @@ mediaEntity media = Entity {
   _entityId = mediaEntityId,
   _init = EmptyMedia,
   _apply = applyMediaEvent,
-  _handle = mediaHandler
-  }
+  _handle = mediaHandler }
 
 applyMediaEvent :: Media -> MediaEvent -> Either String Media
 applyMediaEvent media event = case event of
@@ -54,9 +53,10 @@ applyMediaEvent media event = case event of
   MediaWasDeleted id' -> case media of
     EmptyMedia -> Left "MediaWasDeleted event cannot be applied to EmptyMedia."
     Media id' mediaId' mediaClass' _ -> Right $ Media { mediaEntityId = id'
-                                                    , mediaId = mediaId'
-                                                    , mediaClass = mediaClass'
-                                                    , isDeleted = True }
+                                                      , mediaId = mediaId'
+                                                      , mediaClass = mediaClass'
+                                                      , isDeleted = True
+                                                      }
 
 -- For now, just return Photo
 getMediaClassForFile :: MediaIdentifier -> MediaClass
