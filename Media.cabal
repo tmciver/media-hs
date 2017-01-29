@@ -9,7 +9,7 @@ Library
      Build-Depends:     base >= 3 && < 5,
                         cryptohash,
                         bytestring
-     Exposed-modules:   Domain.Media
+     Exposed-modules:   Domain.Model.Media
      hs-source-dirs:    src
      ghc-options:       -Wall
    default-language:    Haskell2010

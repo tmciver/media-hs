@@ -1,7 +1,7 @@
 module Main where
  
 import Test.Hspec
-import Domain.Media
+import Domain.Model.Media
  
 main :: IO ()
 main = hspec $ do
