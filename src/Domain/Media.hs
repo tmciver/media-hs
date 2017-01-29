@@ -35,11 +35,12 @@ data MediaEvent = MediaWasAdded EntityId MediaIdentifier MediaClass
                 | MediaWasDeleted EntityId
                 deriving (Eq, Show)
 
-mediaEntity :: Media -> Entity Media MediaEvent
+mediaEntity :: Media -> Entity Media MediaCommand MediaEvent
 mediaEntity media = Entity {
   _entityId = mediaEntityId,
   _init = EmptyMedia,
-  _apply = applyMediaEvent
+  _apply = applyMediaEvent,
+  _handle = mediaHandler
   }
 
 applyMediaEvent :: Media -> MediaEvent -> Either String Media
@@ -61,9 +62,9 @@ applyMediaEvent media event = case event of
 getMediaClassForFile :: MediaIdentifier -> MediaClass
 getMediaClassForFile _ = Photo
 
-mediaHandler :: MediaCommand -> IO [MediaEvent]
-mediaHandler (AddMedia mediaId') = pure [MediaWasAdded id mediaId' mediaClass']
+mediaHandler :: MediaCommand -> IO (Either String [MediaEvent])
+mediaHandler (AddMedia mediaId') = (pure . pure) [MediaWasAdded id mediaId' mediaClass']
   where id = hashToHexString mediaId' -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
         hashToHexString = Data.List.concatMap (printf "%02x") . BS.unpack . SHA1.hash . BS.pack
         mediaClass' = getMediaClassForFile mediaId'
-mediaHandler (DeleteMedia mediaId') = pure [MediaWasDeleted mediaId']
+mediaHandler (DeleteMedia mid) = (pure . pure) [MediaWasDeleted mid]

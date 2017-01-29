@@ -12,9 +12,9 @@ main = hspec $ do
           id' = "d6432bddab5d2ef255a1922ee45f85ac89636ec8"
           mediaClass = Photo
       events <- mediaHandler command
-      events `shouldBe` [MediaWasAdded id' path mediaClass]
+      events `shouldBe` Right [MediaWasAdded id' path mediaClass]
 
     it "should return a list containing a single event: MediaWasDeleted" $ do
       let id' = "d6432bddab5d2ef255a1922ee45f85ac89636ec8"
       events <- mediaHandler $ DeleteMedia id'
-      events `shouldBe` [MediaWasDeleted id']
+      events `shouldBe` Right [MediaWasDeleted id']
