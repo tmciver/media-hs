@@ -1,11 +1,10 @@
+{-# LANGUAGE TypeFamilies #-}
+
 module Media.Domain.Model.Media
-       ( --AggregateId
-         --, Aggregate
-         MediaCommand(..)
+       ( Command(..)
+       , Event(..)
        , MediaClass(..)
        , Media
-       , MediaEvent(..)
-       , mediaHandler
        ) where
 
 import Data.List
@@ -28,43 +27,42 @@ data Media = EmptyMedia
                    }
            deriving (Eq, Show)
 
-data MediaCommand = AddMedia MediaIdentifier
-                  | DeleteMedia MediaIdentifier
+instance Entity Media where
+  data Command Media = AddMedia MediaIdentifier
+                     | DeleteMedia MediaIdentifier
+                     deriving (Eq, Show)
+  data Event Media = MediaWasAdded EntityId MediaIdentifier MediaClass
+                   | MediaWasDeleted EntityId
+                   deriving (Eq, Show)
 
-data MediaEvent = MediaWasAdded EntityId MediaIdentifier MediaClass
-                | MediaWasDeleted EntityId
-                deriving (Eq, Show)
+  entityId e = case e of
+    EmptyMedia -> Nothing
+    m -> Just $ mediaId m
 
-mediaEntity :: Media -> Entity Media MediaCommand MediaEvent
-mediaEntity media = Entity {
-  _entityId = mediaEntityId,
-  _init = EmptyMedia,
-  _apply = applyMediaEvent,
-  _handle = mediaHandler }
+  init = EmptyMedia
 
-applyMediaEvent :: Media -> MediaEvent -> Either String Media
-applyMediaEvent media event = case event of
-  MediaWasAdded id' mediaId' mediaClass' -> case media of
-    EmptyMedia -> Right $ Media { mediaEntityId = id'
-                                , mediaId = mediaId'
-                                , mediaClass = mediaClass'
-                                , isDeleted = False }
-    Media _ _ _ _ -> Left "MediaWasAdded event can only be applied to EmptyMedia."
-  MediaWasDeleted id' -> case media of
-    EmptyMedia -> Left "MediaWasDeleted event cannot be applied to EmptyMedia."
-    Media id' mediaId' mediaClass' _ -> Right $ Media { mediaEntityId = id'
-                                                      , mediaId = mediaId'
-                                                      , mediaClass = mediaClass'
-                                                      , isDeleted = True
-                                                      }
+  apply media event = case event of
+    MediaWasAdded id' mediaId' mediaClass' -> case media of
+      EmptyMedia -> Right $ Media { mediaEntityId = id'
+                                  , mediaId = mediaId'
+                                  , mediaClass = mediaClass'
+                                  , isDeleted = False }
+      Media _ _ _ _ -> Left "MediaWasAdded event can only be applied to EmptyMedia."
+    MediaWasDeleted id' -> case media of
+      EmptyMedia -> Left "MediaWasDeleted event cannot be applied to EmptyMedia."
+      Media id' mediaId' mediaClass' _ -> Right $ Media { mediaEntityId = id'
+                                                        , mediaId = mediaId'
+                                                        , mediaClass = mediaClass'
+                                                        , isDeleted = True
+                                                        }
+
+  handle (AddMedia mediaId') = (pure . pure) [MediaWasAdded id mediaId' mediaClass']
+    where id = hashToHexString mediaId' -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
+          hashToHexString = Data.List.concatMap (printf "%02x") . BS.unpack . SHA1.hash . BS.pack
+          mediaClass' = getMediaClassForFile mediaId'
+
+  handle (DeleteMedia mid) = (pure . pure) [MediaWasDeleted mid]
 
 -- For now, just return Photo
 getMediaClassForFile :: MediaIdentifier -> MediaClass
 getMediaClassForFile _ = Photo
-
-mediaHandler :: MediaCommand -> IO (Either String [MediaEvent])
-mediaHandler (AddMedia mediaId') = (pure . pure) [MediaWasAdded id mediaId' mediaClass']
-  where id = hashToHexString mediaId' -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
-        hashToHexString = Data.List.concatMap (printf "%02x") . BS.unpack . SHA1.hash . BS.pack
-        mediaClass' = getMediaClassForFile mediaId'
-mediaHandler (DeleteMedia mid) = (pure . pure) [MediaWasDeleted mid]
