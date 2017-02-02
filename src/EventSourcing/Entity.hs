@@ -10,4 +10,4 @@ class Entity e where
   entityId :: e -> Maybe EntityId
   init :: e
   apply :: e -> Event e -> Either String e
-  handle :: Command e -> IO (Either String [Event e])
+  handle :: e -> Command e -> IO (Either String [Event e])

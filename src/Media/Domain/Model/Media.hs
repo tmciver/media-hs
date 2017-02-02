@@ -4,7 +4,7 @@ module Media.Domain.Model.Media
        ( Command(..)
        , Event(..)
        , MediaClass(..)
-       , Media
+       , Media(..)
        ) where
 
 import Data.List
@@ -28,8 +28,8 @@ data Media = EmptyMedia
            deriving (Eq, Show)
 
 instance Entity Media where
-  data Command Media = AddMedia MediaIdentifier
-                     | DeleteMedia MediaIdentifier
+  data Command Media = AddMedia EntityId MediaIdentifier
+                     | DeleteMedia EntityId
                      deriving (Eq, Show)
   data Event Media = MediaWasAdded EntityId MediaIdentifier MediaClass
                    | MediaWasDeleted EntityId
@@ -56,12 +56,16 @@ instance Entity Media where
                                                         , isDeleted = True
                                                         }
 
-  handle (AddMedia mediaId') = (pure . pure) [MediaWasAdded id mediaId' mediaClass']
-    where id = hashToHexString mediaId' -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
+  handle EmptyMedia (AddMedia eid mid) = (pure . pure) [MediaWasAdded eid mid mediaClass']
+    where eid = hashToHexString mid -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
           hashToHexString = Data.List.concatMap (printf "%02x") . BS.unpack . SHA1.hash . BS.pack
-          mediaClass' = getMediaClassForFile mediaId'
-
-  handle (DeleteMedia mid) = (pure . pure) [MediaWasDeleted mid]
+          mediaClass' = getMediaClassForFile mid
+  handle _ (AddMedia _ _) = pure $ Left "Cannot apply the `AddMedia` command to non-empty media."
+  handle (Media eid mid c deleted) (DeleteMedia eid') = if eid == eid' then
+                                                          (pure . pure) [MediaWasDeleted eid]
+                                                        else
+                                                          pure $ Left "Entity ID mismatch found when attempting to handle the `DeleteMedia` command."
+  handle _ (DeleteMedia _) = pure $ Left "Attempted to delete empty media."
 
 -- For now, just return Photo
 getMediaClassForFile :: MediaIdentifier -> MediaClass
