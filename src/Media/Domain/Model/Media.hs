@@ -20,7 +20,7 @@ type MediaIdentifier = FilePath
 data MediaClass = Photo | Video | Audio
                 deriving (Eq, Show)
 data Media = EmptyMedia
-           | Media { mediaEntityId :: EntityId
+           | Media { mediaEntityId :: String
                    , mediaId :: MediaIdentifier
                    , mediaClass :: MediaClass
                    , isDeleted :: Bool
@@ -28,16 +28,15 @@ data Media = EmptyMedia
            deriving (Eq, Show)
 
 instance Entity Media where
-  data Command Media = AddMedia EntityId MediaIdentifier
-                     | DeleteMedia EntityId
+  data EntityId Media = EntityIdMedia String
+  data Command Media = AddMedia String MediaIdentifier
+                     | DeleteMedia String
                      deriving (Eq, Show)
-  data Event Media = MediaWasAdded EntityId MediaIdentifier MediaClass
-                   | MediaWasDeleted EntityId
+  data Event Media = MediaWasAdded String MediaIdentifier MediaClass
+                   | MediaWasDeleted String
                    deriving (Eq, Show)
 
-  entityId e = case e of
-    EmptyMedia -> Nothing
-    m -> Just $ mediaId m
+  entityId = EntityIdMedia . mediaEntityId
 
   init = EmptyMedia
 

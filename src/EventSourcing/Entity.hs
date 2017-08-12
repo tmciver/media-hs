@@ -2,12 +2,12 @@
 
 module EventSourcing.Entity where
 
-type EntityId = String
-
 class Entity e where
   data Command e :: *
   data Event e :: *
-  entityId :: e -> Maybe EntityId
+  data EntityId e :: *
+
+  entityId :: e -> EntityId e
   init :: e
   apply :: e -> Event e -> Either String e
   handle :: e -> Command e -> IO (Either String [Event e])
