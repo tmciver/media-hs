@@ -40,20 +40,26 @@ instance Entity Media where
 
   init = EmptyMedia
 
-  apply media event = case event of
-    MediaWasAdded id' mediaId' mediaClass' -> case media of
-      EmptyMedia -> Right $ Media { mediaEntityId = id'
-                                  , mediaId = mediaId'
-                                  , mediaClass = mediaClass'
-                                  , isDeleted = False }
-      Media _ _ _ _ -> Left "MediaWasAdded event can only be applied to EmptyMedia."
-    MediaWasDeleted id' -> case media of
-      EmptyMedia -> Left "MediaWasDeleted event cannot be applied to EmptyMedia."
-      Media id' mediaId' mediaClass' _ -> Right $ Media { mediaEntityId = id'
-                                                        , mediaId = mediaId'
-                                                        , mediaClass = mediaClass'
-                                                        , isDeleted = True
-                                                        }
+  apply media event = case (media, event) of
+    (EmptyMedia, MediaWasAdded id' mediaId' mediaClass') ->
+      Right $ Media { mediaEntityId = id'
+                    , mediaId = mediaId'
+                    , mediaClass = mediaClass'
+                    , isDeleted = False }
+    (_, MediaWasAdded _ _ _) ->
+      Left "MediaWasAdded event can only be applied to EmptyMedia."
+    (Media entityId' id' class' False, MediaWasDeleted id'') | id' == id'' ->
+      Right $ Media { mediaEntityId = entityId'
+                    , mediaId = id'
+                    , mediaClass = class'
+                    , isDeleted = True
+                    }
+    (Media _ _ _ False, MediaWasDeleted _) ->
+      Left "Attempted to delete media that was already deleted."
+    (EmptyMedia, MediaWasDeleted _) ->
+      Left "MediaWasDeleted event cannot be applied to EmptyMedia."
+    (_, MediaWasDeleted _) ->
+      Left "Identifiers did not match when attempting to delete media."
 
   handle EmptyMedia (AddMedia eid mid) = (pure . pure) [MediaWasAdded eid mid mediaClass']
     where eid = hashToHexString mid -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
