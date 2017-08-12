@@ -29,7 +29,7 @@ data Media = EmptyMedia
 
 instance Entity Media where
   data EntityId Media = EntityIdMedia String
-  data Command Media = AddMedia String MediaIdentifier
+  data Command Media = AddMedia MediaIdentifier
                      | DeleteMedia String
                      deriving (Eq, Show)
   data Event Media = MediaWasAdded String MediaIdentifier MediaClass
@@ -39,17 +39,7 @@ instance Entity Media where
   entityId = EntityIdMedia . mediaEntityId
   init = EmptyMedia
   apply = applyMediaEvent
-
-  handle EmptyMedia (AddMedia eid mid) = (pure . pure) [MediaWasAdded eid mid mediaClass']
-    where eid = hashToHexString mid -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
-          hashToHexString = Data.List.concatMap (printf "%02x") . BS.unpack . SHA1.hash . BS.pack
-          mediaClass' = getMediaClassForFile mid
-  handle _ (AddMedia _ _) = pure $ Left "Cannot apply the `AddMedia` command to non-empty media."
-  handle (Media eid mid c deleted) (DeleteMedia eid') = if eid == eid' then
-                                                          (pure . pure) [MediaWasDeleted eid]
-                                                        else
-                                                          pure $ Left "Entity ID mismatch found when attempting to handle the `DeleteMedia` command."
-  handle _ (DeleteMedia _) = pure $ Left "Attempted to delete empty media."
+  handle = handleMediaCommand
 
 applyMediaEvent :: Media -> Event Media -> Either String Media
 applyMediaEvent EmptyMedia (MediaWasAdded id' mediaId' mediaClass') =
@@ -71,6 +61,19 @@ applyMediaEvent EmptyMedia (MediaWasDeleted _) =
   Left "MediaWasDeleted event cannot be applied to EmptyMedia."
 applyMediaEvent _ (MediaWasDeleted _) =
   Left "Identifiers did not match when attempting to delete media."
+
+handleMediaCommand :: Media -> Command Media -> IO (Either String [Event Media])
+handleMediaCommand EmptyMedia (AddMedia mid) = (pure . pure) [MediaWasAdded eid mid mediaClass']
+    where eid = hashToHexString mid -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
+          hashToHexString = Data.List.concatMap (printf "%02x") . BS.unpack . SHA1.hash . BS.pack
+          mediaClass' = getMediaClassForFile mid
+handleMediaCommand _ (AddMedia _) = pure $ Left "Cannot apply the `AddMedia` command to non-empty media."
+handleMediaCommand (Media eid _ _ False) (DeleteMedia eid') =
+  if eid == eid'
+  then (pure . pure) [MediaWasDeleted eid]
+  else pure $ Left "Entity ID mismatch found when attempting to handle the `DeleteMedia` command."
+handleMediaCommand (Media _ _ _ True) (DeleteMedia _) = pure $ Left "Cannot delete media that is already deleted."
+handleMediaCommand _ (DeleteMedia _) = pure $ Left "Attempted to delete empty media."
 
 -- For now, just return Photo
 getMediaClassForFile :: MediaIdentifier -> MediaClass
