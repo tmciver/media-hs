@@ -37,29 +37,8 @@ instance Entity Media where
                    deriving (Eq, Show)
 
   entityId = EntityIdMedia . mediaEntityId
-
   init = EmptyMedia
-
-  apply media event = case (media, event) of
-    (EmptyMedia, MediaWasAdded id' mediaId' mediaClass') ->
-      Right $ Media { mediaEntityId = id'
-                    , mediaId = mediaId'
-                    , mediaClass = mediaClass'
-                    , isDeleted = False }
-    (_, MediaWasAdded _ _ _) ->
-      Left "MediaWasAdded event can only be applied to EmptyMedia."
-    (Media entityId' id' class' False, MediaWasDeleted id'') | id' == id'' ->
-      Right $ Media { mediaEntityId = entityId'
-                    , mediaId = id'
-                    , mediaClass = class'
-                    , isDeleted = True
-                    }
-    (Media _ _ _ False, MediaWasDeleted _) ->
-      Left "Attempted to delete media that was already deleted."
-    (EmptyMedia, MediaWasDeleted _) ->
-      Left "MediaWasDeleted event cannot be applied to EmptyMedia."
-    (_, MediaWasDeleted _) ->
-      Left "Identifiers did not match when attempting to delete media."
+  apply = applyMediaEvent
 
   handle EmptyMedia (AddMedia eid mid) = (pure . pure) [MediaWasAdded eid mid mediaClass']
     where eid = hashToHexString mid -- the aggregate ID will simply be the sha1 hash of the MediaIdentifier
@@ -71,6 +50,27 @@ instance Entity Media where
                                                         else
                                                           pure $ Left "Entity ID mismatch found when attempting to handle the `DeleteMedia` command."
   handle _ (DeleteMedia _) = pure $ Left "Attempted to delete empty media."
+
+applyMediaEvent :: Media -> Event Media -> Either String Media
+applyMediaEvent EmptyMedia (MediaWasAdded id' mediaId' mediaClass') =
+  Right $ Media { mediaEntityId = id'
+                , mediaId = mediaId'
+                , mediaClass = mediaClass'
+                , isDeleted = False }
+applyMediaEvent _ (MediaWasAdded _ _ _) =
+  Left "MediaWasAdded event can only be applied to EmptyMedia."
+applyMediaEvent (Media entityId' id' class' False) (MediaWasDeleted id'') | id' == id'' =
+  Right $ Media { mediaEntityId = entityId'
+                , mediaId = id'
+                , mediaClass = class'
+                , isDeleted = True
+                }
+applyMediaEvent (Media _ _ _ False) (MediaWasDeleted _) =
+  Left "Attempted to delete media that was already deleted."
+applyMediaEvent EmptyMedia (MediaWasDeleted _) =
+  Left "MediaWasDeleted event cannot be applied to EmptyMedia."
+applyMediaEvent _ (MediaWasDeleted _) =
+  Left "Identifiers did not match when attempting to delete media."
 
 -- For now, just return Photo
 getMediaClassForFile :: MediaIdentifier -> MediaClass
