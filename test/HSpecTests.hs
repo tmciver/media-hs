@@ -3,6 +3,8 @@ module Main where
 import Test.Hspec
 import Media.Domain.Model.Media
 import EventSourcing.Entity
+import Media.Test.Todo
+import Data.DateTime (fromGregorian')
  
 main :: IO ()
 main = hspec $ do
@@ -22,3 +24,10 @@ main = hspec $ do
           media = Media eid path mediaClass' False
       events <- handle media (DeleteMedia eid)
       events `shouldBe` Right [MediaWasDeleted eid]
+
+  describe "Tests for Event Sourcing repository function `getEntityById`" $ do
+    it "should return the correct hydrated entity" $ do
+      let juneSeventh = fromGregorian' 2017 6 7
+          expectedTodo = Todo "123" "Buy milk" juneSeventh False
+      Right(todo) <- getEntityById todoEventStore (TodoId "123")
+      expectedTodo `shouldBe` todo
