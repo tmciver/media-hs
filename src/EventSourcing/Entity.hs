@@ -7,9 +7,9 @@ import Control.Monad (foldM)
 import Prelude hiding (init)
 
 class Entity e where
+  type EntityId e :: *
   data Command e :: *
   data Event e :: *
-  data EntityId e :: *
 
   entityId :: e -> EntityId e
   init :: e

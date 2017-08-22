@@ -3,7 +3,7 @@
 module Media.Test.Todo ( Todo(..)
                        , Command(..)
                        , Event(..)
-                       , EntityId(..)
+--                       , EntityId(..)
                        , todoEventStore) where
 
 import Data.DateTime (DateTime, fromGregorian', addMinutes, startOfTime)
@@ -18,7 +18,7 @@ data Todo = Todo String String DateTime Bool
           deriving (Eq, Show)
 
 instance Entity Todo where
-  data EntityId Todo = TodoId String
+  type EntityId Todo = String
 
   data Command Todo = CreateTodo String DateTime
                     | CompleteTodo String -- ID
@@ -30,7 +30,7 @@ instance Entity Todo where
                   | DueDateWasChanged String DateTime
                   deriving (Eq, Show)
 
-  entityId (Todo id' _ _ _) = TodoId id'
+  entityId (Todo id' _ _ _) = id'
   init = Todo "" "Nothing to do." startOfTime False
   apply = applyTodoEvent
   handle _ _ = pure (pure [])

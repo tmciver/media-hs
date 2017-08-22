@@ -28,7 +28,7 @@ data Media = EmptyMedia
            deriving (Eq, Show)
 
 instance Entity Media where
-  data EntityId Media = EntityIdMedia String
+  type EntityId Media = String
   data Command Media = AddMedia MediaIdentifier
                      | DeleteMedia String
                      deriving (Eq, Show)
@@ -36,7 +36,7 @@ instance Entity Media where
                    | MediaWasDeleted String
                    deriving (Eq, Show)
 
-  entityId = EntityIdMedia . mediaEntityId
+  entityId = mediaEntityId
   init = EmptyMedia
   apply = applyMediaEvent
   handle = handleMediaCommand
