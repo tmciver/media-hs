@@ -4,7 +4,7 @@ import Test.Hspec
 import Media.Domain.Model.Media
 import EventSourcing.Entity
 import Media.Test.Todo
-import Data.DateTime (fromGregorian')
+import Data.DateTime (fromGregorian', addMinutes)
  
 main :: IO ()
 main = hspec $ do
@@ -25,9 +25,29 @@ main = hspec $ do
       events <- handle media (DeleteMedia eid)
       events `shouldBe` Right [MediaWasDeleted eid]
 
-  describe "Tests for Event Sourcing repository function `getEntityById`" $ do
-    it "should return the correct hydrated entity" $ do
-      let juneSeventh = fromGregorian' 2017 6 7
-          expectedTodo = Todo "123" "Buy milk" juneSeventh False
-      Right(todo) <- getEntityById todoEventStore "123"
-      expectedTodo `shouldBe` todo
+  describe "Todo Tests" $ do
+    describe "Todo EventStore Tests" $ do
+      it "should 'get' the same events that it 'save's for a given entity ID" $ do
+        let juneSixth = fromGregorian' 2017 6 6
+            oneDayInMinutes = 60 * 24
+            juneSeventh = addMinutes oneDayInMinutes juneSixth
+            savedEvents = [ TodoWasCreated "123" "Buy milk" juneSixth
+                          , DueDateWasChanged "123" juneSeventh]
+        todoEventStore <- newTodoEventStore
+        _ <- save todoEventStore "123" savedEvents
+        retrievedEvents <- get todoEventStore "123"
+        retrievedEvents `shouldBe` savedEvents
+
+    describe "Tests for Event Sourcing repository function `getEntityById`" $ do
+      it "should return the correct hydrated entity" $ do
+        let juneSixth = fromGregorian' 2017 6 6
+            oneDayInMinutes = 60 * 24
+            juneSeventh = addMinutes oneDayInMinutes juneSixth
+            savedEvents = [ TodoWasCreated "123" "Buy milk" juneSixth
+                          , DueDateWasChanged "123" juneSeventh]
+        todoEventStore <- newTodoEventStore
+        _ <- save todoEventStore "123" savedEvents
+        let expectedTodo = Todo "123" "Buy milk" juneSeventh False
+        Right(todo) <- getEntityById todoEventStore "123"
+        -- _ <- print x
+        expectedTodo `shouldBe` todo

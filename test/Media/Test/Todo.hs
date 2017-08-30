@@ -3,11 +3,13 @@
 module Media.Test.Todo ( Todo(..)
                        , Command(..)
                        , Event(..)
---                       , EntityId(..)
-                       , todoEventStore) where
+                       , newTodoEventStore) where
 
-import Data.DateTime (DateTime, fromGregorian', addMinutes, startOfTime)
+import Data.DateTime (DateTime, startOfTime)
 import EventSourcing.Entity
+import Data.Map as Map
+import Data.IORef (IORef, newIORef, readIORef, writeIORef)
+import Data.Maybe (fromMaybe)
 
 -- Fields are:
 --   ID
@@ -42,17 +44,22 @@ applyTodoEvent (Todo id' text dueDate _) (TodoWasCompleted _) = Right $ Todo id'
 applyTodoEvent (Todo id' text _ False) (DueDateWasChanged _ newDueDate) = Right $ Todo id' text newDueDate False
 applyTodoEvent todo event = Left $ "Could not apply event " ++ (show event) ++ " to Todo " ++ (show todo)
 
-addEvents :: EntityId Todo -> [Event Todo] -> IO (Either String ())
-addEvents _ _ = pure $ pure ()
+type TodoMap = Map (EntityId Todo) [Event Todo]
 
-getEvents :: EntityId Todo -> IO [Event Todo]
-getEvents _ = let juneSixth = fromGregorian' 2017 6 6
-                  oneDayInMinutes = 60 * 24
-                  juneSeventh = addMinutes oneDayInMinutes juneSixth
-              in
-               pure [ TodoWasCreated "123" "Buy milk" juneSixth
-                    , DueDateWasChanged "123" juneSeventh]
+newTodoEventStore :: IO (EventStore Todo)
+newTodoEventStore = do
+  ref <- newIORef (Map.empty :: TodoMap)
+  return $ EventStore (getTodoEvents ref) (saveTodoEvents ref)
 
-todoEventStore :: EventStore Todo
-todoEventStore = EventStore getEvents addEvents
+getTodoEvents :: IORef TodoMap -> EntityId Todo -> IO [Event Todo]
+getTodoEvents ref id' = do
+  m <- readIORef ref
+  let events = fromMaybe [] (Map.lookup id' m)
+  return events
 
+saveTodoEvents :: IORef TodoMap -> EntityId Todo -> [Event Todo] -> IO (Either String ())
+saveTodoEvents ref id' events = do
+  m <- readIORef ref
+  let m' = Map.insertWith (++) id' events m
+  _ <- writeIORef ref m'
+  return $ Right ()
