@@ -2,7 +2,7 @@
 
 module EventSourcing.Entity where
 
-import Control.Monad (foldM)
+import Control.Monad (foldM, forM_)
 import Prelude hiding (init)
 
 class Entity e where
@@ -20,7 +20,8 @@ data EventStore e = EventStore
                     , save :: EntityId e -> [Event e] -> IO (Either String ())
                     }
 
--- type CommandHandler = Entity e => Command e -> IO (Either String [Event e])
+type CommandHandler e = EventStore e -> Command e -> IO (Either String [Event e])
+type EventListener e = Event e -> IO ()
 
 getEntityById :: Entity e => EventStore e -> EntityId e -> IO (Either String e)
 getEntityById store id' =
@@ -31,5 +32,11 @@ getEntityById store id' =
           events' -> foldM apply init events'
     return eitherEntity
 
--- handleCommand :: Entity e => Command e -> IO (Either String ())
--- handleCommand = undefined
+handleCommand :: Entity e => EventStore e -> CommandHandler e -> EventListener e -> EntityId e -> Command e -> IO (Either String ())
+handleCommand store handler listener eId command = do
+  eitherEvents <- handler store command
+  case eitherEvents of
+    Right(events) -> do
+      _ <- forM_ events listener
+      save store eId events
+    Left(err) -> pure $ Left err
