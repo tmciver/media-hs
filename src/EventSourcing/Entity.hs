@@ -15,28 +15,34 @@ class Entity e where
   apply :: e -> Event e -> Either String e
   handle :: e -> Command e -> IO (Either String [Event e])
 
+-- In the future this may not be needed. I need to figure out how
+-- to statically guarantee that has a filed for the associated
+-- entity ID.
+data EventList e = EventList (EntityId e) [Event e]
+
+type CommandHandler e = EventStore e -> Command e -> IO (Either String (EventList e))
+type EventListener e = Event e -> IO ()
+
 data EventStore e = EventStore
-                    { get :: EntityId e -> IO [Event e]
-                    , save :: EntityId e -> [Event e] -> IO (Either String ())
+                    { get :: EntityId e -> IO (EventList e)
+                    , save :: (EventList e) -> IO (Either String ())
                     }
 
-type CommandHandler e = EventStore e -> Command e -> IO (Either String [Event e])
-type EventListener e = Event e -> IO ()
 
 getEntityById :: Entity e => EventStore e -> EntityId e -> IO (Either String e)
 getEntityById store id' =
   do -- IO
-    events <- get store id'
+    (EventList _ events) <- get store id'
     let eitherEntity = case events of
           [] -> Left "No events for entity ID"
           events' -> foldM apply init events'
     return eitherEntity
 
-handleCommand :: Entity e => EventStore e -> CommandHandler e -> EventListener e -> EntityId e -> Command e -> IO (Either String ())
-handleCommand store handler listener eId command = do
+handleCommand :: Entity e => EventStore e -> CommandHandler e -> EventListener e -> Command e -> IO (Either String ())
+handleCommand store handler listener command = do
   eitherEvents <- handler store command
   case eitherEvents of
-    Right(events) -> do
+    Right(eventList@(EventList _ events)) -> do
       _ <- forM_ events listener
-      save store eId events
+      save store eventList
     Left(err) -> pure $ Left err

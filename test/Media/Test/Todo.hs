@@ -51,14 +51,14 @@ newTodoEventStore = do
   ref <- newIORef (Map.empty :: TodoMap)
   return $ EventStore (getTodoEvents ref) (saveTodoEvents ref)
 
-getTodoEvents :: IORef TodoMap -> EntityId Todo -> IO [Event Todo]
+getTodoEvents :: IORef TodoMap -> EntityId Todo -> IO (EventList Todo)
 getTodoEvents ref id' = do
   m <- readIORef ref
   let events = fromMaybe [] (Map.lookup id' m)
-  return events
+  return (EventList id' events)
 
-saveTodoEvents :: IORef TodoMap -> EntityId Todo -> [Event Todo] -> IO (Either String ())
-saveTodoEvents ref id' events = do
+saveTodoEvents :: IORef TodoMap -> (EventList Todo) -> IO (Either String ())
+saveTodoEvents ref (EventList id' events) = do
   m <- readIORef ref
   let m' = Map.insertWith (++) id' events m
   _ <- writeIORef ref m'

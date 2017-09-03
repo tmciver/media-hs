@@ -33,9 +33,10 @@ main = hspec $ do
             juneSeventh = addMinutes oneDayInMinutes juneSixth
             savedEvents = [ TodoWasCreated "123" "Buy milk" juneSixth
                           , DueDateWasChanged "123" juneSeventh]
+            savedEventList = EventList "123" savedEvents
         todoEventStore <- newTodoEventStore
-        _ <- save todoEventStore "123" savedEvents
-        retrievedEvents <- get todoEventStore "123"
+        _ <- save todoEventStore savedEventList
+        (EventList _ retrievedEvents) <- get todoEventStore "123"
         retrievedEvents `shouldBe` savedEvents
 
     describe "Tests for Event Sourcing repository function `getEntityById`" $ do
@@ -43,10 +44,10 @@ main = hspec $ do
         let juneSixth = fromGregorian' 2017 6 6
             oneDayInMinutes = 60 * 24
             juneSeventh = addMinutes oneDayInMinutes juneSixth
-            savedEvents = [ TodoWasCreated "123" "Buy milk" juneSixth
-                          , DueDateWasChanged "123" juneSeventh]
+            savedEvents = (EventList "123" [ TodoWasCreated "123" "Buy milk" juneSixth
+                                           , DueDateWasChanged "123" juneSeventh])
         todoEventStore <- newTodoEventStore
-        _ <- save todoEventStore "123" savedEvents
+        _ <- save todoEventStore savedEvents
         let expectedTodo = Todo "123" "Buy milk" juneSeventh False
         Right(todo) <- getEntityById todoEventStore "123"
         -- _ <- print x
