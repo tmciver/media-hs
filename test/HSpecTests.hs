@@ -25,8 +25,8 @@ main = hspec $ do
       events <- handle media (DeleteMedia eid)
       events `shouldBe` Right [MediaWasDeleted eid]
 
-  describe "Todo Tests" $ do
-    describe "Todo EventStore Tests" $ do
+  describe "Event Sourcing Tests" $ do
+    describe "EventStore Tests" $ do
       it "should 'get' the same events that it 'save's for a given entity ID" $ do
         let juneSixth = fromGregorian' 2017 6 6
             oneDayInMinutes = 60 * 24
@@ -39,7 +39,12 @@ main = hspec $ do
         (EventList _ retrievedEvents) <- get todoEventStore "123"
         retrievedEvents `shouldBe` savedEvents
 
-    describe "Tests for Event Sourcing repository function `getEntityById`" $ do
+      it "should return the empty list for and entity that has no events" $ do
+        todoEventStore <- newTodoEventStore
+        (EventList _ retrievedEvents) <- get todoEventStore "123"
+        retrievedEvents `shouldBe` []
+
+    describe "Repository Tests" $ do
       it "should return the correct hydrated entity" $ do
         let juneSixth = fromGregorian' 2017 6 6
             oneDayInMinutes = 60 * 24
@@ -50,5 +55,4 @@ main = hspec $ do
         _ <- save todoEventStore savedEvents
         let expectedTodo = Todo "123" "Buy milk" juneSeventh False
         Right(todo) <- getEntityById todoEventStore "123"
-        -- _ <- print x
         expectedTodo `shouldBe` todo
