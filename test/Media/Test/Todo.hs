@@ -3,13 +3,16 @@
 module Media.Test.Todo ( Todo(..)
                        , Command(..)
                        , Event(..)
-                       , newTodoEventStore) where
+                       , newTodoEventStore
+                       , todoCommandHandler
+                       , todoEventListener) where
 
 import Data.DateTime (DateTime, startOfTime)
 import EventSourcing.Entity
 import Data.Map as Map
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import Data.Maybe (fromMaybe)
+import System.Random (randomIO)
 
 -- Fields are:
 --   ID
@@ -63,3 +66,13 @@ saveTodoEvents ref (EventList id' events) = do
   let m' = Map.insertWith (++) id' events m
   _ <- writeIORef ref m'
   return $ Right ()
+
+todoCommandHandler :: CommandHandler Todo
+todoCommandHandler _ (CreateTodo desc date) = do
+  id' <- show <$> (randomIO :: IO Int)
+  return $ Right $ EventList id' [TodoWasCreated id' desc date]
+
+todoCommandHandler _ command = pure $ Left ("Handler for command " ++ show command ++ " not yet Implemented")
+
+todoEventListener :: EventListener Todo
+todoEventListener _ = pure ()

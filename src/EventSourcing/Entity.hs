@@ -38,11 +38,12 @@ getEntityById store id' =
           events' -> foldM apply init events'
     return eitherEntity
 
-handleCommand :: Entity e => EventStore e -> CommandHandler e -> EventListener e -> Command e -> IO (Either String ())
+handleCommand :: Entity e => EventStore e -> CommandHandler e -> EventListener e -> Command e -> IO (Either String (EntityId e))
 handleCommand store handler listener command = do
   eitherEvents <- handler store command
   case eitherEvents of
-    Right(eventList@(EventList _ events)) -> do
+    Right(eventList@(EventList id' events)) -> do
       _ <- forM_ events listener
-      save store eventList
+      _ <- save store eventList
+      return $ Right id'
     Left(err) -> pure $ Left err

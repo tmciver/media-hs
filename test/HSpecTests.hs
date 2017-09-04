@@ -4,7 +4,7 @@ import Test.Hspec
 import Media.Domain.Model.Media
 import EventSourcing.Entity
 import Media.Test.Todo
-import Data.DateTime (fromGregorian', addMinutes)
+import Data.DateTime (fromGregorian', addMinutes, getCurrentTime)
  
 main :: IO ()
 main = hspec $ do
@@ -60,3 +60,13 @@ main = hspec $ do
       it "should return an error for an entity that has no events" $ do
         todoEventStore <- newTodoEventStore
         getEntityById todoEventStore "123" `shouldReturn` Left "No events for entity ID"
+
+    describe "Command-handling Tests" $ do
+      it "should load the event store with the appropriate events" $ do
+        currentTime <- getCurrentTime
+        todoEventStore <- newTodoEventStore
+        let command = CreateTodo "Get rash checked out" currentTime
+            commandHandler = handleCommand todoEventStore todoCommandHandler todoEventListener
+        Right id' <- commandHandler command
+        (EventList _ events) <- get todoEventStore id'
+        events `shouldBe` [TodoWasCreated id' "Get rash checked out" currentTime]
