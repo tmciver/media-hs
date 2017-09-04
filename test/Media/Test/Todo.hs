@@ -68,11 +68,11 @@ saveTodoEvents ref (EventList id' events) = do
   return $ Right ()
 
 todoCommandHandler :: CommandHandler Todo
-todoCommandHandler _ (CreateTodo desc date) = do
+todoCommandHandler (CreateTodo desc date) = do
   id' <- show <$> (randomIO :: IO Int)
   return $ Right $ EventList id' [TodoWasCreated id' desc date]
 
-todoCommandHandler _ command = pure $ Left ("Handler for command " ++ show command ++ " not yet Implemented")
+todoCommandHandler command = pure $ Left ("Handler for command " ++ show command ++ " not yet Implemented")
 
 todoEventListener :: EventListener Todo
 todoEventListener _ = pure ()

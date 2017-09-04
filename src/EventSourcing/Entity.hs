@@ -20,7 +20,7 @@ class Entity e where
 -- entity ID.
 data EventList e = EventList (EntityId e) [Event e]
 
-type CommandHandler e = EventStore e -> Command e -> IO (Either String (EventList e))
+type CommandHandler e = Command e -> IO (Either String (EventList e))
 type EventListener e = Event e -> IO ()
 
 data EventStore e = EventStore
@@ -28,19 +28,17 @@ data EventStore e = EventStore
                     , save :: (EventList e) -> IO (Either String ())
                     }
 
-
 getEntityById :: Entity e => EventStore e -> EntityId e -> IO (Either String e)
-getEntityById store id' =
-  do -- IO
-    (EventList _ events) <- get store id'
-    let eitherEntity = case events of
-          [] -> Left "No events for entity ID"
-          events' -> foldM apply init events'
-    return eitherEntity
+getEntityById store id' = do -- IO
+  (EventList _ events) <- get store id'
+  let eitherEntity = case events of
+        [] -> Left "No events for entity ID"
+        events' -> foldM apply init events'
+  return eitherEntity
 
 handleCommand :: Entity e => EventStore e -> CommandHandler e -> EventListener e -> Command e -> IO (Either String (EntityId e))
 handleCommand store handler listener command = do
-  eitherEvents <- handler store command
+  eitherEvents <- handler command
   case eitherEvents of
     Right(eventList@(EventList id' events)) -> do
       _ <- forM_ events listener
