@@ -56,3 +56,7 @@ main = hspec $ do
         let expectedTodo = Todo "123" "Buy milk" juneSeventh False
         Right(todo) <- getEntityById todoEventStore "123"
         expectedTodo `shouldBe` todo
+
+      it "should return an error for an entity that has no events" $ do
+        todoEventStore <- newTodoEventStore
+        getEntityById todoEventStore "123" `shouldReturn` Left "No events for entity ID"
