@@ -1,11 +1,11 @@
 module EventSourcing.InMemoryEventStore (inMemoryEventStore) where
 
 import EventSourcing.Entity
-import Data.IORef (newIORef)
-import Data.Map as Map
-import Data.IORef (IORef, newIORef, readIORef)
-import Data.Maybe (fromMaybe)
+--import Data.Map as Map
+--import Data.IORef (IORef, newIORef, readIORef)
+--import Data.Maybe (fromMaybe)
 
+-- Cannot get this to work. Will revisit when I understand Haskell better.
 inMemoryEventStore :: Entity e => EventStore e
 inMemoryEventStore = undefined
   -- let
@@ -24,5 +24,5 @@ inMemoryEventStore = undefined
 --   let events = fromMaybe [] (Map.lookup id' m)
 --   return events
 
-mySave :: Entity e => EntityId e -> [Event e] -> IO (Either String ())
-mySave _ _ = undefined
+-- mySave :: Entity e => EntityId e -> [Event e] -> IO (Either String ())
+-- mySave _ _ = undefined
