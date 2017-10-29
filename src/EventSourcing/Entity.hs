@@ -13,14 +13,16 @@ class Entity e where
   entityId :: e -> EntityId e
   init :: e
   apply :: e -> Event e -> Either String e
-  handle :: e -> Command e -> IO (Either String [Event e])
 
 -- In the future this may not be needed. I need to figure out how
 -- to statically guarantee that has a filed for the associated
 -- entity ID.
 data EventList e = EventList (EntityId e) [Event e]
 
-type CommandHandler e = Command e -> IO (Either String (EventList e))
+--type GetEvents e = EntityId e -> IO (EventList e)
+--type SaveEvents e = EventList e -> IO (Either String ())
+type GetEntity e = EntityId e -> IO (Either String e)
+type CommandHandler e = GetEntity e -> Command e -> IO (Either String (EventList e))
 type EventListener e = Event e -> IO ()
 
 data EventStore e = EventStore
@@ -28,9 +30,9 @@ data EventStore e = EventStore
                     , save :: (EventList e) -> IO (Either String ())
                     }
 
-getEntityById :: Entity e => EventStore e -> EntityId e -> IO (Either String e)
-getEntityById store id' = do -- IO
-  (EventList _ events) <- get store id'
+getEntityById :: Entity e => (EntityId e -> IO (EventList e)) -> EntityId e -> IO (Either String e)
+getEntityById getEvents id' = do -- IO
+  (EventList _ events) <- getEvents id'
   let eitherEntity = case events of
         [] -> Left "No events for entity ID"
         events' -> foldM apply init events'
@@ -38,7 +40,7 @@ getEntityById store id' = do -- IO
 
 handleCommand :: Entity e => EventStore e -> CommandHandler e -> EventListener e -> Command e -> IO (Either String (EntityId e))
 handleCommand store handler listener command = do
-  eitherEvents <- handler command
+  eitherEvents <- (handler (getEntityById (get store))) command
   case eitherEvents of
     Right(eventList@(EventList id' events)) -> do
       _ <- forM_ events listener

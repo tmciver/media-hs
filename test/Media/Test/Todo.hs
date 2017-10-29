@@ -38,8 +38,6 @@ instance Entity Todo where
   entityId (Todo id' _ _ _) = id'
   init = Todo "" "Nothing to do." startOfTime False
   apply = applyTodoEvent
-  handle _ _ = pure (pure [])
-
 
 applyTodoEvent :: Todo -> Event Todo -> Either String Todo
 applyTodoEvent _ (TodoWasCreated id' text dueDate) = Right $ Todo id' text dueDate False
@@ -68,11 +66,11 @@ saveTodoEvents ref (EventList id' events) = do
   return $ Right ()
 
 todoCommandHandler :: CommandHandler Todo
-todoCommandHandler (CreateTodo desc date) = do
+todoCommandHandler _ (CreateTodo desc date) = do
   id' <- show <$> (randomIO :: IO Int)
   return $ Right $ EventList id' [TodoWasCreated id' desc date]
 
-todoCommandHandler command = pure $ Left ("Handler for command " ++ show command ++ " not yet Implemented")
+todoCommandHandler _ command = pure $ Left ("Handler for command " ++ show command ++ " not yet Implemented")
 
 todoEventListener :: EventListener Todo
 todoEventListener _ = pure ()
