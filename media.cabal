@@ -1,4 +1,4 @@
-name:           Media
+name:           media
 version:        0.1.0
 synopsis:       Library for media managment (using event sourcing, CQRS)
 author:         Tim McIver
@@ -26,7 +26,7 @@ test-suite tests
    other-modules:       Media.Domain.Model.MediaSpec
                         EventSourcing.EntitySpec
    build-depends:       base,
-                        Media,
+                        media,
                         cryptohash,
                         bytestring,
                         containers,
