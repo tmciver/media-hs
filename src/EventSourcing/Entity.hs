@@ -14,9 +14,8 @@ class Entity e where
   init :: e
   apply :: e -> Event e -> Either String e
 
--- In the future this may not be needed. I need to figure out how
--- to statically guarantee that has a filed for the associated
--- entity ID.
+-- In the future this may not be needed if there's a way to statically guarantee
+-- that all Events in a list have the same entity ID.
 data EventList e = EventList (EntityId e) [Event e]
 
 --type GetEvents e = EntityId e -> IO (EventList e)
